@@ -1,6 +1,11 @@
-import demo from './demo'
+import httpHelper from './node-http-helper'
 
-console.log(demo)
-// console.log("demo")
-
-export default demo
+httpHelper({
+  url: 'https://www.lanyueos.com'
+}, (err, res) => {
+  if (err) {
+    throw err
+  }
+  console.log(res)
+  console.log(res.toString())
+})
