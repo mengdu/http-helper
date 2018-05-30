@@ -1,64 +1,94 @@
 'use strict'
 import http from 'http'
+import https from 'https'
 import url from 'url'
+import compose from './compose'
 
+function request(options) {
+  let net = options.protocol === 'http:' ? http : https
+  return new Promise((resolve, reject) => {
+    let req = net.request(options, res => {
 
-const handleCallback = function (options, cb) {
-  return function (res) {
-    let chunks = []
+      let chunks = []
+      res.on('data', chunk => {
+        chunks.push(chunk)
+      })
 
-    res.on('data', chunk => {
-      chunks.push(chunk)
+      res.on('end', () => {
+        resolve(chunks.join(), res)
+     })
     })
 
-    res.on('end', () => {
-      cb(null, [].concat(chunks))
+    req.on('error', (err) => {
+      reject(err)
     })
-  }
+
+    req.on('timeout', () => {
+      reject(new Error('Http request has timeout'))
+    })
+    req.end()
+  })
 }
 
-function request(options, cb) {
+class RequestOption {
+  constructor (options = {}) {
+    let {
+      protocol,
+      hostname,
+      port,
+      path 
+    } = url.parse(options.url)
 
-  if (typeof options !== 'object') {
-    throw new Error('The options params must be an object.')
+    this.method = (options.method || 'GET').toUpperCase()
+    this.timeout = options.timeout
+    this.headers = options.headers || []
+    this.auth = options.auth
+    this.agent = options.agent
+    this.body = options.body
+    this.type = options.type
+    this.params = options.params
+
+    this.hostname = hostname
+    this.port = port
+    this.protocol = protocol
+    this.path = path
   }
-  if (typeof options.url !== 'string' && !options.url) {
-    throw new Error('The options.url params required.')
-  }
-  let op = {...options}
-  let {protocol, hostname, port, path} = url.parse(op.url)
-  delete op.url
-  op.protocol = protocol
-  op.hostname = hostname
-  op.port = port
-  op.path = path
-  op.method = (op.method || 'GET').toUpperCase()
-
-  console.log(op)
-  let req = http.request(op, handleCallback(op, cb))
-
-  req.on('error', (err) => {
-    cb(err)
-  })
-
-  req.on('timeout', () => {
-    cb({message: 'http timeout'})
-  })
-  req.end()
 }
 
 export default class HttpHepler {
   constructor () {
     this.middlewares = []
   }
-  get request () {
-    return request
-  }
+
   get http () {
     return http
   }
+
   use (fn) {
     if (typeof fn !== 'function') throw new Error('The middleware must be a functon.')
     this.middlewares.push(fn)
+  }
+
+  async request (options) {
+    if (typeof options !== 'object') {
+      throw new Error('The options params must be an object.')
+    }
+    if (typeof options.url !== 'string' && !options.url) {
+      throw new Error('The options.url params required.')
+    }
+
+    let reqOpts = new RequestOption(options)
+
+    compose(this.middlewares)(reqOpts, async function (options, next) {
+      let net = options.protocol === 'http:' ? http : https
+
+      let res = await request(options)
+
+      options.res = res
+
+      await next()
+      console.log('http: end')
+    })
+
   }
 }
