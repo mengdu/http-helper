@@ -1,7 +1,11 @@
 const http = require('http')
+const https = require('https')
 const url = require('url')
 
-const req = http.request({}, res => {
+const req = http.request({
+  hostname: 'www.baidu.com',
+  agent: false
+}, res => {
 
   var chunks = []
 
@@ -21,3 +25,15 @@ req.on('error', (e) => {
 })
 
 req.end()
+// console.log('agent:', http.globalAgent)
+// https.get('https://www.lanyueos.com', res => {
+//   res.setEncoding('utf8');
+//   let rawData = '';
+//   res.on('data', (chunk) => { rawData += chunk; })
+//   res.on('end', () => {
+//     console.log(rawData)
+//   })
+// }).on('error', err => {
+//   console.log('错误', err)
+// })
+
