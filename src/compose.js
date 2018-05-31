@@ -1,5 +1,7 @@
+'use strict'
 /**
 * 洋葱模型
+* https://github.com/koajs/compose
 * @param {Array} middleware array
 * @return {Promise}
 **/

@@ -80,7 +80,6 @@ export default class HttpHepler {
     let reqOpts = new RequestOption(options)
 
     compose(this.middlewares)(reqOpts, async function (options, next) {
-      let net = options.protocol === 'http:' ? http : https
 
       let res = await request(options)
 
