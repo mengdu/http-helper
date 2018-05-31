@@ -3,9 +3,11 @@ import http from 'http'
 import https from 'https'
 import url from 'url'
 import compose from './compose'
+import interceptors from './interceptors'
 
 function request(options) {
   let net = options.protocol === 'http:' ? http : https
+
   return new Promise((resolve, reject) => {
     let req = net.request(options, res => {
 
@@ -30,7 +32,7 @@ function request(options) {
   })
 }
 
-class RequestOption {
+class RequestHeader {
   constructor (options = {}) {
     let {
       protocol,
@@ -41,7 +43,7 @@ class RequestOption {
 
     this.method = (options.method || 'GET').toUpperCase()
     this.timeout = options.timeout
-    this.headers = options.headers || []
+    // this.headers = options.headers || []
     this.auth = options.auth
     this.agent = options.agent
     this.body = options.body
@@ -57,37 +59,47 @@ class RequestOption {
 
 export default class HttpHepler {
   constructor () {
-    this.middlewares = []
-  }
-
-  get http () {
-    return http
-  }
-
-  use (fn) {
-    if (typeof fn !== 'function') throw new Error('The middleware must be a functon.')
-    this.middlewares.push(fn)
-  }
-
-  async request (options) {
-    if (typeof options !== 'object') {
-      throw new Error('The options params must be an object.')
-    }
-    if (typeof options.url !== 'string' && !options.url) {
-      throw new Error('The options.url params required.')
+    this.request = {
+      middlewares: [],
+      use (fn) {
+        if (typeof fn !== 'function') throw new Error('The middleware must be a functon.')
+        this.middlewares.push(fn)
+        return this
+      }
     }
 
-    let reqOpts = new RequestOption(options)
+    this.response = {
+      middlewares: [],
+      use (fn) {
+        if (typeof fn !== 'function') throw new Error('The middleware must be a functon.')
+        this.middlewares.push(fn)
+        return this
+      }
+    }
+  }
 
-    compose(this.middlewares)(reqOpts, async function (options, next) {
+  fetch (options) {
+    let that = this
+    return new Promise((resolve, reject) => {
+      if (typeof options !== 'object') {
+        reject(new Error('The options params must be an object.'))
+      }
+      if (typeof options.url !== 'string' && !options.url) {
+        reject(new Error('The options.url params required.'))
+      }
 
-      let res = await request(options)
+      let reqOpts = new RequestHeader(options)
 
-      options.res = res
-
-      await next()
-      console.log('http: end')
+      interceptors(that.request.middlewares)(reqOpts, function (options) {
+        request(options).then(res => {
+          // resolve(res, options)
+          interceptors(that.response.middlewares)(res, function (newRes) {
+            resolve(newRes)
+          })
+        }).catch(err => {
+          reject(err)
+        })
+      })
     })
-
   }
 }

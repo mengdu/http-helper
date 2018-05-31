@@ -2,13 +2,28 @@ import httpHelper from './node-http-helper'
 
 const http = new httpHelper()
 
-http.use(async (ctx, next) => {
-  console.log(ctx)
-  await next()
-  console.log('end')
-  console.log(ctx.res)
+http.request.use(function (options, next) {
+  console.log(1, options)
+  next()
+})
+.use(function (options, next) {
+  console.log(2, options)
+  next()
 })
 
-http.request({
-  url: 'https://www.lanyueos.com'
+
+http.response.use(function (res, next) {
+  console.log(3, res)
+  next()
+})
+.use(function (res, next) {
+  console.log(4, res)
+  next()
+})
+
+
+http.fetch({
+  url: 'http://blog.lanyueos.com'
+}).then(res => {
+  console.log('end', res)
 })

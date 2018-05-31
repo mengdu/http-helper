@@ -1,30 +1,30 @@
 'use strict'
-
-
-// export default function interceptors (middlewares) {
-//   if (!Array.isArray(middleware)) throw new TypeError('Middleware stack must be an array!')
-//   for (const fn of middleware) {
-//     if (typeof fn !== 'function') throw new TypeError('Middleware must be composed of functions!')
-//   }
+/**
+* 中间件执行器
+* e.g. interceptors(obj.middlewares)(ctx, fn)
+* @param {Array} middlewares 中间件数组
+* @return {Function}
+**/
+export default function interceptors (middlewares) {
+  if (!Array.isArray(middlewares)) throw new TypeError('Middleware stack must be an array!')
+  for (const fn of middlewares) {
+    if (typeof fn !== 'function') throw new TypeError('Middleware must be composed of functions!')
+  }
   
-//   return function (content, next) {
-//     let index = -1
+  return function (content, next) {
+    let index = -1
+    function dispatch (i) {
+      if (i <= index) throw new Error('next() called multiple times')
+      index = i
+      if (i >= middlewares.length) {
+        return next(content)
+      }
+      let fn = middlewares[i]
 
-//     function dispatch (i) {
-//       let fn = middleware[i]
-//       try {
-//         return Promise.resolve(fn(content, function next () {
-//           return dispatch(i + 1)
-//         })
-//       } catch (err) {
-//         return Promise.reject(err)
-//       }
-//     }
-//     return dispatch(0)
-//   }
-// }
-
-// interceptors([], async function (ctx, next) {
-//   ctx.xxx = 'xx'
-//   next()
-// })
+      fn(content, function () {
+        dispatch(i + 1)
+      })
+    }
+    dispatch(0)
+  }
+}
