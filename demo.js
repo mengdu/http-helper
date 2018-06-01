@@ -1,40 +1,57 @@
-const http = require('http')
-const https = require('https')
-const url = require('url')
+const HttpHepler = require('./dest').default
+const http = new HttpHepler()
 
-// const req = http.request({
-//   protocol: 'http:',
-//   hostname: 'www.baidu.com',
-//   agent: false
-// }, res => {
-
-//   var chunks = []
-
-//   res.setEncoding('utf8')
-
-//   res.on('data', function (chunk) {
-//     chunks.push(chunk)
-//     console.log(arguments)
-//   })
-//   res.on('end', function () {
-//     console.log('data:', chunks.join())
-//   })
+// http.request.use(function (options, next) {
+//   console.log(1)
+//   next()
+// })
+// .use(function (options, next) {
+//   console.log(2)
+//   next()
 // })
 
-// req.on('error', (e) => {
-//   console.error(`请求遇到问题: ${e.message}`)
+
+// http.response.use(function (res, next) {
+//   console.log(3)
+//   next()
+// })
+// .use(function (res, next) {
+//   console.log(4)
+//   next()
 // })
 
-// req.end()
-// console.log('agent:', http.globalAgent)
-// https.get('https://www.lanyueos.com', res => {
-//   res.setEncoding('utf8');
-//   let rawData = '';
-//   res.on('data', (chunk) => { rawData += chunk; })
-//   res.on('end', () => {
-//     console.log(rawData)
-//   })
-// }).on('error', err => {
-//   console.log('错误', err)
+
+// http.fetch({
+//   url: 'http://localhost:3000/api/put',
+//   params: {
+//     userId: 1001
+//   },
+//   method: 'put',
+//   headers: {
+//     Authorization: '62a0db74ddb370b96548aed1a3ab8852'
+//   },
+//   body: {
+//     username: 'admin',
+//     password: '123456'
+//   }
+// }).then(res => {
+//   console.log(res.headers)
+//   console.log('end', res.body.toString())
+// }).catch(err => {
+//   console.log(err)
 // })
 
+http.post('http://localhost:3000/api/all?callback=test', {
+  params: {
+    page: 1,
+    pageSize: 12,
+    zh: '中文'
+  },
+  body: {
+    username: 'admin',
+    password: '123456',
+    zh: '中文'
+  }
+}).then(res => {
+  console.log(res.body.toString())
+})
