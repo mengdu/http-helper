@@ -146,7 +146,6 @@ var HttpHepler = function () {
             options.headers['Content-Length'] = Buffer.byteLength(options.body, that.bodyEncode);
           }
 
-          console.log(options);
           request(options).then(function (res) {
             (0, _interceptors2.default)(that.response.middlewares)(res, function (newRes) {
               resolve(newRes);

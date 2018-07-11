@@ -110,7 +110,6 @@ export default class HttpHepler {
           options.headers['Content-Length'] = Buffer.byteLength(options.body, that.bodyEncode)
         }
 
-        console.log(options)
         request(options).then(res => {
           interceptors(that.response.middlewares)(res, function (newRes) {
             resolve(newRes)
