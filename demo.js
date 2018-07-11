@@ -54,4 +54,6 @@ http.post('http://localhost:3000/api/all?callback=test', {
   }
 }).then(res => {
   console.log(res.body.toString())
+}).catch(err => {
+  console.log(err.message)
 })
