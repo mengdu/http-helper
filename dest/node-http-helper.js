@@ -138,14 +138,14 @@ var HttpHepler = function () {
           var url = _urlparams2.default.url(options.path, options.params, that.urlEncode);
           options.path = url;
           options.method = (options.method || 'GET').toUpperCase();
-          options.headers['Content-Length'] = 0;
+          // options.headers['Content-Length'] = 0
 
           if (['POST', 'PUT', 'PATCH'].indexOf(options.method) > -1) {
-            options.body = _urlparams2.default.stringify(options.body);
+            options.body = _typeof(options.body) === 'object' ? _urlparams2.default.stringify(options.body) : options.body;
             options.headers['Content-Type'] = options.headers['Content-Type'] || 'application/x-www-form-urlencoded';
-            options.headers['Content-Length'] = Buffer.byteLength(options.body, that.bodyEncode);
+            // options.headers['Content-Length'] = Buffer.byteLength(options.body, that.bodyEncode)
           }
-
+          console.log(options);
           request(options).then(function (res) {
             (0, _interceptors2.default)(that.response.middlewares)(res, function (newRes) {
               resolve(newRes);

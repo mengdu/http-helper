@@ -10,7 +10,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 * 判断一些原生对象
 **/
 function isOriginObject(obj) {
-  return obj.constructor === Date || typeof obj === 'function';
+  return obj instanceof Date || typeof obj === 'function';
 }
 
 function isArr(val) {

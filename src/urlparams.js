@@ -2,7 +2,7 @@
 * 判断一些原生对象
 **/
 function isOriginObject (obj) {
-  return obj.constructor === Date ||
+  return obj instanceof Date ||
     typeof obj === 'function'
 }
 

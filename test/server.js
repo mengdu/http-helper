@@ -27,7 +27,9 @@ app.use(async (ctx, next, app) => {
 
 // post解析，不支持文件上传
 app.use(KoaBodyParser())
-// app.use(KoaBody())
+// app.use(KoaBody({
+//   multipart: true
+// }))
 
 router.get('/', ctx => {
   ctx.body = {msg: 'wellcome home'}
@@ -58,22 +60,28 @@ router.put('/api/put', ctx => {
 })
 
 router.all('/api/all', async ctx => {
+  console.log(ctx.request)
   ctx.body = {
     api: true,
     type: ctx.method,
     query: ctx.query,
-    body: ctx.request.body,
-    files: ctx.request.body.files
+    body: ctx.request.body
   }
 })
 
-router.all('/api/file', KoaBody(), async ctx => {
+router.all('/api/file', KoaBody({
+  multipart: true,
+  formLimit: 400 * 1024 * 1024,
+  formidable: {
+    maxFileSize: 400 * 1024 * 1024
+  }
+
+}), async ctx => {
   ctx.body = {
     api: true,
     type: ctx.method,
     query: ctx.query,
-    body: ctx.request.body,
-    files: ctx.request.body.files
+    body: ctx.request.body
   }
 })
 

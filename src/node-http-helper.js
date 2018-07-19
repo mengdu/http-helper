@@ -102,14 +102,16 @@ export default class HttpHepler {
         let url = urlparams.url(options.path, options.params, that.urlEncode)
         options.path = url
         options.method = (options.method || 'GET').toUpperCase()
-        options.headers['Content-Length'] = 0
+        // options.headers['Content-Length'] = 0
 
         if (['POST', 'PUT', 'PATCH'].indexOf(options.method) > -1) {
-          options.body = urlparams.stringify(options.body)
+          options.body = typeof options.body === 'object'
+            ? urlparams.stringify(options.body)
+            : options.body
           options.headers['Content-Type'] = options.headers['Content-Type'] || 'application/x-www-form-urlencoded'
-          options.headers['Content-Length'] = Buffer.byteLength(options.body, that.bodyEncode)
+          // options.headers['Content-Length'] = Buffer.byteLength(options.body, that.bodyEncode)
         }
-
+        console.log(options)
         request(options).then(res => {
           interceptors(that.response.middlewares)(res, function (newRes) {
             resolve(newRes)
