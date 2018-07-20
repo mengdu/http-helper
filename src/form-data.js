@@ -27,7 +27,7 @@ export default class FormData {
   getAll (key) {
     return this.body[key] ? this.body[key] : []
   }
-  has () {
+  has (key) {
     return !!this.body[key]
   }
   // keys () {

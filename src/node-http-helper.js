@@ -1,71 +1,18 @@
 'use strict'
-import http from 'http'
-import https from 'https'
-import url from 'url'
+import crypto from 'crypto'
+import EventEmitter from 'events'
+import request from './request'
+import RequestHeader from './request-header'
 import interceptors from './interceptors'
 import urlparams from './urlparams'
+import FormData from './form-data'
 
-function request(options) {
-  let net = options.protocol === 'http:' ? http : https
-
-  return new Promise((resolve, reject) => {
-    let req = net.request(options, res => {
-      // res.setEncoding('utf8')
-      let chunks = []
-      let totalLen = 0
-      res.on('data', chunk => {
-        chunks = [].concat(chunk)
-        totalLen += chunk.length
-      })
-
-      res.on('end', () => {
-        res.body = Buffer.concat(chunks, totalLen)
-        resolve(res)
-      })
-    })
-
-    req.on('error', (err) => {
-      reject(err)
-    })
-
-    req.on('timeout', () => {
-      reject(new Error('Http request has timeout'))
-    })
-
-    req.write(['POST', 'PUT', 'PATCH'].indexOf(options.method) > -1 ? options.body : '')
-    req.end()
-  })
-}
-
-class RequestHeader {
+export default class HttpHepler extends EventEmitter {
   constructor (options = {}) {
-    let {
-      protocol,
-      hostname,
-      port,
-      path
-    } = url.parse(options.url)
-
-    this.method = (options.method || 'GET').toUpperCase()
-    this.timeout = options.timeout
-    this.headers = options.headers || {}
-    this.auth = options.auth
-    this.agent = options.agent
-    this.body = options.body || {}
-    this.params = options.params || {}
-
-    this.hostname = hostname
-    this.port = port
-    this.protocol = protocol
-    this.path = path
-  }
-}
-
-export default class HttpHepler {
-
-  constructor (options = {}) {
+    super()
     this.urlEncode = options.urlEncode === 'undefined' ? options.urlEncode : true
-    this.bodyEncode = this.bodyEncode === 'undefined' ? this.bodyEncode : false
+
+    // 请求中间件
     this.request = {
       middlewares: [],
       use (fn) {
@@ -75,6 +22,7 @@ export default class HttpHepler {
       }
     }
 
+    // 响应中间件
     this.response = {
       middlewares: [],
       use (fn) {
@@ -86,7 +34,7 @@ export default class HttpHepler {
   }
 
   fetch (options) {
-    let that = this
+    const that = this
     return new Promise((resolve, reject) => {
       if (typeof options !== 'object') {
         reject(new Error('The options params must be an object.'))
@@ -94,25 +42,44 @@ export default class HttpHepler {
       if (typeof options.url !== 'string' && !options.url) {
         reject(new Error('The options.url params required.'))
       }
+      // 创建请求对象
+      const reqOpts = new RequestHeader(options)
 
-      let reqOpts = new RequestHeader(options)
-
+      // 请求中间件
       interceptors(that.request.middlewares)(reqOpts, function (options) {
 
-        let url = urlparams.url(options.path, options.params, that.urlEncode)
+        const url = urlparams.url(options.path, options.params, that.urlEncode)
         options.path = url
         options.method = (options.method || 'GET').toUpperCase()
-        // options.headers['Content-Length'] = 0
 
         if (['POST', 'PUT', 'PATCH'].indexOf(options.method) > -1) {
-          options.body = typeof options.body === 'object'
-            ? urlparams.stringify(options.body)
-            : options.body
+
           options.headers['Content-Type'] = options.headers['Content-Type'] || 'application/x-www-form-urlencoded'
-          // options.headers['Content-Length'] = Buffer.byteLength(options.body, that.bodyEncode)
+
+          if (typeof options.body === 'object') {
+
+            if (!(options.body instanceof FormData)) {
+              options.body = urlparams.stringify(options.body)
+            } else {
+              const randString = crypto.randomBytes(32).toString('hex')
+              options.boundary = crypto.createHash('md5').update(randString + Date.now()).digest('hex')
+              options.headers['Content-Type'] = 'multipart/form-data; boundary=' + options.boundary + ''
+              options.headers['Transfer-Encoding'] = 'chunked'
+            }
+          }
+        } else {
+          options.body = ''
         }
-        console.log(options)
-        request(options).then(res => {
+
+        // 触发 start 事件
+        that.emit('start', options)
+
+        // 发起请求
+        request(options, that).then(res => {
+          // 触发 end 事件
+          that.emit('end', options, res)
+
+          // 响应中间件
           interceptors(that.response.middlewares)(res, function (newRes) {
             resolve(newRes)
           })

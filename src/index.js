@@ -1,3 +1,3 @@
-import HttpHepler from './node-http-helper'
+import MHttp from './node-http-helper'
 
-export default HttpHepler
+export default MHttp
