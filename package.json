@@ -1,19 +1,34 @@
 {
-  "name": "node-hot-dev",
+  "name": "m-http",
   "version": "1.0.0",
-  "description": "node项目模板",
+  "description": "Http request tool for node.",
   "main": "dest/index.js",
   "scripts": {
-    "dev": "nodemon dev.js",
+    "dev": "babel src --out-dir dest -w",
     "start": "node dest/index.js",
     "compile": "babel src --out-dir dest",
     "lint": "eslint src",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "https",
+    "url": "git+https://github.com/mengdu/http-helper"
+  },
+  "bugs": {
+    "url": "https://github.com/mengdu/http-helper/issues"
+  },
   "keywords": [
-    "hot",
-    "dev",
-    "node"
+    "http",
+    "request",
+    "http-request",
+    "m-http"
+  ],
+  "files": [
+    "src",
+    "dest",
+    "file.js",
+    "form-data.js",
+    "index.js"
   ],
   "author": "lanyue",
   "license": "MIT",
@@ -31,5 +46,9 @@
     "koa-body": "^2.6.0",
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^7.4.0"
+  },
+  "dependencies": {
+    "file-type": "^8.1.0",
+    "read-chunk": "^2.1.0"
   }
 }
