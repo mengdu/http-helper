@@ -11,17 +11,21 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _http = require('http');
+var _crypto = require('crypto');
 
-var _http2 = _interopRequireDefault(_http);
+var _crypto2 = _interopRequireDefault(_crypto);
 
-var _https = require('https');
+var _events = require('events');
 
-var _https2 = _interopRequireDefault(_https);
+var _events2 = _interopRequireDefault(_events);
 
-var _url = require('url');
+var _request = require('./request');
 
-var _url2 = _interopRequireDefault(_url);
+var _request2 = _interopRequireDefault(_request);
+
+var _requestHeader = require('./request-header');
+
+var _requestHeader2 = _interopRequireDefault(_requestHeader);
 
 var _interceptors = require('./interceptors');
 
@@ -31,76 +35,32 @@ var _urlparams = require('./urlparams');
 
 var _urlparams2 = _interopRequireDefault(_urlparams);
 
+var _formData = require('./form-data');
+
+var _formData2 = _interopRequireDefault(_formData);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function request(options) {
-  var net = options.protocol === 'http:' ? _http2.default : _https2.default;
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-  return new Promise(function (resolve, reject) {
-    var req = net.request(options, function (res) {
-      // res.setEncoding('utf8')
-      var chunks = [];
-      var totalLen = 0;
-      res.on('data', function (chunk) {
-        chunks = [].concat(chunk);
-        totalLen += chunk.length;
-      });
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-      res.on('end', function () {
-        res.body = Buffer.concat(chunks, totalLen);
-        resolve(res);
-      });
-    });
+var HttpHepler = function (_EventEmitter) {
+  _inherits(HttpHepler, _EventEmitter);
 
-    req.on('error', function (err) {
-      reject(err);
-    });
-
-    req.on('timeout', function () {
-      reject(new Error('Http request has timeout'));
-    });
-
-    req.write(['POST', 'PUT', 'PATCH'].indexOf(options.method) > -1 ? options.body : '');
-    req.end();
-  });
-}
-
-var RequestHeader = function RequestHeader() {
-  var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-  _classCallCheck(this, RequestHeader);
-
-  var _url$parse = _url2.default.parse(options.url),
-      protocol = _url$parse.protocol,
-      hostname = _url$parse.hostname,
-      port = _url$parse.port,
-      path = _url$parse.path;
-
-  this.method = (options.method || 'GET').toUpperCase();
-  this.timeout = options.timeout;
-  this.headers = options.headers || {};
-  this.auth = options.auth;
-  this.agent = options.agent;
-  this.body = options.body || {};
-  this.params = options.params || {};
-
-  this.hostname = hostname;
-  this.port = port;
-  this.protocol = protocol;
-  this.path = path;
-};
-
-var HttpHepler = function () {
   function HttpHepler() {
     var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
     _classCallCheck(this, HttpHepler);
 
-    this.urlEncode = options.urlEncode === 'undefined' ? options.urlEncode : true;
-    this.bodyEncode = this.bodyEncode === 'undefined' ? this.bodyEncode : false;
-    this.request = {
+    var _this = _possibleConstructorReturn(this, (HttpHepler.__proto__ || Object.getPrototypeOf(HttpHepler)).call(this));
+
+    _this.urlEncode = options.urlEncode === 'undefined' ? options.urlEncode : true;
+
+    // 请求中间件
+    _this.request = {
       middlewares: [],
       use: function use(fn) {
         if (typeof fn !== 'function') throw new Error('The middleware must be a functon.');
@@ -109,7 +69,8 @@ var HttpHepler = function () {
       }
     };
 
-    this.response = {
+    // 响应中间件
+    _this.response = {
       middlewares: [],
       use: function use(fn) {
         if (typeof fn !== 'function') throw new Error('The middleware must be a functon.');
@@ -117,6 +78,7 @@ var HttpHepler = function () {
         return this;
       }
     };
+    return _this;
   }
 
   _createClass(HttpHepler, [{
@@ -130,23 +92,44 @@ var HttpHepler = function () {
         if (typeof options.url !== 'string' && !options.url) {
           reject(new Error('The options.url params required.'));
         }
+        // 创建请求对象
+        var reqOpts = new _requestHeader2.default(options);
 
-        var reqOpts = new RequestHeader(options);
-
+        // 请求中间件
         (0, _interceptors2.default)(that.request.middlewares)(reqOpts, function (options) {
 
           var url = _urlparams2.default.url(options.path, options.params, that.urlEncode);
           options.path = url;
           options.method = (options.method || 'GET').toUpperCase();
-          // options.headers['Content-Length'] = 0
 
           if (['POST', 'PUT', 'PATCH'].indexOf(options.method) > -1) {
-            options.body = _typeof(options.body) === 'object' ? _urlparams2.default.stringify(options.body) : options.body;
+
             options.headers['Content-Type'] = options.headers['Content-Type'] || 'application/x-www-form-urlencoded';
-            // options.headers['Content-Length'] = Buffer.byteLength(options.body, that.bodyEncode)
+
+            if (_typeof(options.body) === 'object') {
+
+              if (!(options.body instanceof _formData2.default)) {
+                options.body = _urlparams2.default.stringify(options.body);
+              } else {
+                var randString = _crypto2.default.randomBytes(32).toString('hex');
+                options.boundary = _crypto2.default.createHash('md5').update(randString + Date.now()).digest('hex');
+                options.headers['Content-Type'] = 'multipart/form-data; boundary=' + options.boundary + '';
+                options.headers['Transfer-Encoding'] = 'chunked';
+              }
+            }
+          } else {
+            options.body = '';
           }
-          console.log(options);
-          request(options).then(function (res) {
+
+          // 触发 start 事件
+          that.emit('start', options);
+
+          // 发起请求
+          (0, _request2.default)(options, that).then(function (res) {
+            // 触发 end 事件
+            that.emit('end', options, res);
+
+            // 响应中间件
             (0, _interceptors2.default)(that.response.middlewares)(res, function (newRes) {
               resolve(newRes);
             });
@@ -201,6 +184,6 @@ var HttpHepler = function () {
   }]);
 
   return HttpHepler;
-}();
+}(_events2.default);
 
 exports.default = HttpHepler;
