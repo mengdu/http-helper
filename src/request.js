@@ -20,7 +20,7 @@ export default function request(options, target) {
       let chunks = []
       let totalLen = 0
       res.on('data', chunk => {
-        chunks = [].concat(chunk)
+        chunks.push(chunk)
         totalLen += chunk.length
       })
 
