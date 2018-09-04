@@ -31,8 +31,8 @@ export default function request(options, target) {
     })
 
     req.on('error', (err) => {
-      target.emit('error', err)
       reject(err)
+      target.listeners('error').length > 0 && target.emit('error', err)
     })
 
     req.on('timeout', () => {

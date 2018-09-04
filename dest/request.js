@@ -89,7 +89,7 @@ function request(options, target) {
                 var chunks = [];
                 var totalLen = 0;
                 res.on('data', function (chunk) {
-                  chunks = [].concat(chunk);
+                  chunks.push(chunk);
                   totalLen += chunk.length;
                 });
 
@@ -101,8 +101,8 @@ function request(options, target) {
 
 
               req.on('error', function (err) {
-                target.emit('error', err);
                 reject(err);
+                target.listeners('error').length > 0 && target.emit('error', err);
               });
 
               req.on('timeout', function () {

@@ -94,6 +94,8 @@ var HttpHepler = function (_EventEmitter) {
         }
         // 创建请求对象
         var reqOpts = new _requestHeader2.default(options);
+        // 合并公共 headers
+        reqOpts.headers = Object.assign({}, that.headers || {}, reqOpts.headers);
 
         // 请求中间件
         (0, _interceptors2.default)(that.request.middlewares)(reqOpts, function (options) {

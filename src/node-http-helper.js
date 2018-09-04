@@ -44,6 +44,8 @@ export default class HttpHepler extends EventEmitter {
       }
       // 创建请求对象
       const reqOpts = new RequestHeader(options)
+      // 合并公共 headers
+      reqOpts.headers = Object.assign({}, that.headers || {}, reqOpts.headers)
 
       // 请求中间件
       interceptors(that.request.middlewares)(reqOpts, function (options) {
