@@ -104,7 +104,7 @@ var HttpHepler = function (_EventEmitter) {
           options.path = url;
           options.method = (options.method || 'GET').toUpperCase();
 
-          if (['POST', 'PUT', 'PATCH'].indexOf(options.method) > -1) {
+          if (['POST', 'PUT', 'PATCH', 'DELETE'].indexOf(options.method) > -1) {
 
             options.headers['Content-Type'] = options.headers['Content-Type'] || 'application/x-www-form-urlencoded';
 

@@ -1,8 +1,8 @@
 {
   "name": "m-http",
   "version": "1.0.0",
-  "description": "Http request tool for node.",
-  "main": "dest/index.js",
+  "description": "A library for HTTP request helper on node.",
+  "main": "index.js",
   "scripts": {
     "dev": "babel src --out-dir dest -w",
     "start": "node dest/index.js",

@@ -1,6 +1,6 @@
 const MHttp = require('../dest').default
-const FormData = require('../dest/form-data').default
-const File = require('../dest/file').default
+// const FormData = require('../dest/form-data').default
+// const File = require('../dest/file').default
 
 const http = new MHttp()
 

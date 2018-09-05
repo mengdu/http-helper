@@ -60,7 +60,7 @@ router.put('/api/put', ctx => {
 })
 
 router.all('/api/all', async ctx => {
-  console.log(ctx.request)
+  // console.log(ctx.request)
   ctx.body = {
     api: true,
     type: ctx.method,
