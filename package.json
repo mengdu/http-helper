@@ -48,6 +48,7 @@
     "koa-router": "^7.4.0"
   },
   "dependencies": {
+    "babel-runtime": "^6.26.0",
     "file-type": "^8.1.0",
     "read-chunk": "^2.1.0"
   }
